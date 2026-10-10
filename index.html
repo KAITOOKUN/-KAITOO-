@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大学入試面接練習 KAITOOくん</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 1. 背景設定 */
+        .background-interviewer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1e293b;
+            background-image: radial-gradient(circle at 50% 30%, #334155 0%, #0f172a 100%);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .background-interviewer.custom-bg-active svg {
+            display: none;
+        }
+
+        /* 2. 背景のオーバーレイ */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 1;
+            overflow-y: auto;
+        }
+
+        /* ヘッダータイトル */
+        .header {
+            color: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            text-align: center;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+        .badge {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        h1 { font-size: 1.9rem; margin: 0; letter-spacing: 1px; }
+        .subtitle { font-size: 0.95rem; margin-top: 4px; opacity: 0.9; }
+
+        /* メッセージボード */
+        .message-board {
+            background: rgba(255, 255, 255, 0.92);
+            border-left: 5px solid #2563eb;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            width: 92%;
+            max-width: 520px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            color: #334155;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            text-align: left;
+        }
+        .message-board p {
+            margin: 0 0 8px 0;
+        }
+        .message-board p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 系統選択画面 */
+        #select-screen {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 25px 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 92%;
+            max-width: 520px;
+            text-align: center;
+            box-sizing: border-box;
+            margin-bottom: 30px;
+        }
+        #select-screen h2 {
+            font-size: 1.25rem;
+            margin: 0 0 6px 0;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        .select-desc {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 18px;
+        }
+
+        /* カテゴリーボタン（カード型） */
+        .category-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .category-card {
+            display: flex;
+            align-items: center;
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .category-card:hover {
+            border-color: #2563eb;
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.12);
+        }
+        .category-card:active {
+            transform: translateY(0);
+        }
+        .icon {
+            font-size: 1.8rem;
+            margin-right: 14px;
+            width: 40px;
+            text-align: center;
+        }
+        .card-info {
+            flex: 1;
+        }
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .card-sub {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        /* 記録ボタン（トップ画面用） */
+        .history-btn-container {
+            margin-top: 15px;
+            width: 92%;
+            max-width: 520px;
+            text-align: center;
+        }
+        .history-open-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .history-open-btn:hover {
+            background: #f8fafc;
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        /* 面接＆計測画面 */
+        #quiz-screen {
+            display: none;
+            width: 100%;
+            max-width: 700px;
+            flex-direction: column;
+            align-items: center;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+        .question-container {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 30px 35px;
+            border-radius: 18px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+            border-left: 8px solid #2563eb;
+            box-sizing: border-box;
+        }
+        .question-text {
+            font-size: 1.55rem;
+            color: #0f172a;
+            line-height: 1.45;
+            min-height: 85px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .timer-box {
+            font-size: 1.3rem;
+            color: #ef4444;
+            font-weight: bold;
+            background: rgba(255,255,255,0.92);
+            padding: 6px 20px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+        .btn {
+            flex: 1;
+            padding: 16px 0;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn:active { transform: scale(0.97); }
+        #start-btn { background-color: #10b981; }
+        #stop-btn { background-color: #ef4444; opacity: 0.5; cursor: not-allowed; }
+        #stop-btn.active { opacity: 1; cursor: pointer; }
+
+        /* 自己評価選択パネル（回答終了後に表示） */
+        #eval-container {
+            display: none;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 25px 30px;
+            border-radius: 18px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 700px;
+            box-sizing: border-box;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #eval-container h3 {
+            margin: 0 0 15px 0;
+            color: #1e293b;
+            font-size: 1.2rem;
+        }
+        .eval-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .eval-btn {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #1e293b;
+            transition: all 0.2s;
+        }
+        .eval-btn:hover {
+            background: #eff6ff;
+            border-color: #2563eb;
+            color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        /* 記録一覧画面 */
+        #history-screen {
+            display: none;
+            background: rgba(255, 255, 255, 0.96);
+            padding: 25px 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 92%;
+            max-width: 650px;
+            box-sizing: border-box;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        #history-screen h2 {
+            margin: 0 0 5px 0;
+            color: #1e293b;
+        }
+        .history-list {
+            max-height: 380px;
+            overflow-y: auto;
+            margin-top: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+            padding-right: 5px;
+        }
+        .history-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .history-card-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .history-card-question {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .history-card-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            font-weight: bold;
+        }
+        .reset-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+            transition: background 0.2s;
+        }
+        .reset-btn:hover {
+            background: #dc2626;
+        }
+
+        .back-link {
+            margin-top: 18px;
+            color: #f1f5f9;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            transition: background 0.2s;
+        }
+        .back-link:hover { background: rgba(15, 23, 42, 0.85); }
+    </style>
+</head>
+<body>
+
+    <!-- 背景（イラストまたは指定画像） -->
+    <div class="background-interviewer" id="bg-container">
+        <svg viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <rect width="800" height="600" fill="#1e293b"/>
+            <rect x="50" y="40" width="700" height="280" fill="#064e3b" rx="8" stroke="#047857" stroke-width="8"/>
+            <text x="80" y="80" fill="#a7f3d0" font-family="monospace" font-size="14" opacity="0.4">E = mc²   H₂O + CO₂ → C₆H₁₂O₆ + O₂</text>
+            <text x="550" y="100" fill="#a7f3d0" font-family="sans-serif" font-size="16" opacity="0.3">【大学入試面接室】</text>
+            
+            <rect x="0" y="460" width="800" height="140" fill="#475569"/>
+            <rect x="0" y="450" width="800" height="15" fill="#334155"/>
+            <rect x="500" y="410" width="60" height="40" fill="#38bdf8" opacity="0.3" rx="4"/>
+            <rect x="650" y="430" width="70" height="20" fill="#e2e8f0" rx="2"/>
+
+            <g id="teacher">
+                <path d="M 280 460 Q 400 440 520 460 L 550 600 L 250 600 Z" fill="#f8fafc"/>
+                <path d="M 330 460 L 400 520 L 470 460 L 440 600 L 360 600 Z" fill="#cbd5e1"/>
+                <path d="M 370 460 L 400 470 L 430 460 L 415 580 L 385 580 Z" fill="#1e3a8a"/>
+                <polygon points="400,470 410,520 400,560 390,520" fill="#2563eb"/>
+                <path d="M 370 420 Q 400 450 430 420 L 430 460 L 370 460 Z" fill="#f8fafc"/>
+                <rect x="470" y="490" width="25" height="35" fill="#e2e8f0" rx="2" stroke="#94a3b8" stroke-width="1"/>
+                <line x1="478" y1="482" x2="478" y2="500" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="484" y1="480" x2="484" y2="500" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+
+                <path d="M 370 380 Q 400 410 430 380 L 420 430 Q 400 440 380 430 Z" fill="#fbcfe8"/>
+                <path d="M 370 380 Q 400 410 430 380 L 420 425 Q 400 435 380 425 Z" fill="#fde047" opacity="0.3"/>
+                <ellipse cx="400" cy="340" rx="45" ry="55" fill="#fde047" opacity="0.2"/>
+                <ellipse cx="400" cy="335" rx="42" ry="50" fill="#fbcfe8"/>
+                <ellipse cx="356" cy="340" rx="7" ry="12" fill="#fbcfe8"/>
+                <ellipse cx="444" cy="340" rx="7" ry="12" fill="#fbcfe8"/>
+
+                <path d="M 355 320 Q 370 280 410 285 Q 445 290 445 325 Q 430 300 400 300 Q 370 300 355 320 Z" fill="#1e1b4b"/>
+                <path d="M 355 320 Q 365 305 385 305 Q 400 320 395 335 Q 380 315 355 320 Z" fill="#312e81"/>
+                <path d="M 445 320 Q 435 305 415 305 Q 400 320 405 335 Q 420 315 445 320 Z" fill="#312e81"/>
+
+                <rect x="368" y="325" width="26" height="18" rx="3" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+                <rect x="406" y="325" width="26" height="18" rx="3" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+                <line x1="394" y1="332" x2="406" y2="332" stroke="#0284c7" stroke-width="2"/>
+                <path d="M 368 330 L 358 326" stroke="#0284c7" stroke-width="2"/>
+                <path d="M 432 330 L 442 326" stroke="#0284c7" stroke-width="2"/>
+
+                <circle cx="381" cy="334" r="3" fill="#1e1b4b"/>
+                <circle cx="419" cy="334" r="3" fill="#1e1b4b"/>
+                <circle cx="382" cy="333" r="1" fill="#ffffff"/>
+                <circle cx="420" cy="333" r="1" fill="#ffffff"/>
+                <path d="M 372 320 Q 381 316 390 320" stroke="#312e81" stroke-width="2" fill="none"/>
+                <path d="M 410 320 Q 419 316 428 320" stroke="#312e81" stroke-width="2" fill="none"/>
+
+                <path d="M 397 340 L 400 348 L 395 350" stroke="#f97316" stroke-width="1.5" fill="none" opacity="0.6"/>
+                <path d="M 388 362 Q 400 372 412 362" stroke="#0f172a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            </g>
+        </svg>
+    </div>
+
+    <!-- オーバーレイ -->
+    <div class="overlay">
+        
+        <!-- アプリヘッダー -->
+        <div class="header">
+            <div class="badge">多治見北高生のための大学入試面接対策</div>
+            <h1>大学入試面接練習 KAITOOくん</h1>
+            <div class="subtitle">本番さながらの想定質問＆回答タイムトレーニング</div>
+        </div>
+
+        <!-- メッセージボード -->
+        <div class="message-board" id="welcome-message">
+            <p>面接は緊張して当たり前。うまく話そうと構える必要もありません。「この大学で学びたい」という気持ちを、自分の言葉で誠実に伝えてください。</p>
+            <p>自分らしく、笑顔でハキハキと落ち着いて、話すことが一番大切です。答えの内容以上に、話し方や態度で人柄が伝わります。</p>
+            <p>少しでも皆さんの合格への手助けとなれば幸いです！　　　　　　　松田</p>
+        </div>
+
+        <!-- 記録ページへ行くボタン（トップ画面用） -->
+        <div class="history-btn-container" id="history-btn-box">
+            <button class="history-open-btn" onclick="openHistoryScreen()">📊 これまでの練習記録を見る</button>
+        </div>
+
+        <!-- 1. 系統選択画面 -->
+        <div id="select-screen">
+            <h2>志望系統を選択してください</h2>
+            <div class="select-desc">選択した系統からランダムに問題が出題されます</div>
+
+            <div class="category-grid">
+                <div class="category-card" onclick="selectCategory('common')">
+                    <div class="icon">🏫</div>
+                    <div class="card-info">
+                        <div class="card-title">全学部・共通質問</div>
+                        <div class="card-sub">志望理由 / 高校生活 など (300問)</div>
+                    </div>
+                </div>
+
+                <div class="category-card" onclick="selectCategory('medical')">
+                    <div class="icon">⚕️</div>
+                    <div class="card-info">
+                        <div class="card-title">医療系</div>
+                        <div class="card-sub">医学 / 看護 / 薬学 / 医療倫理 など (400問)</div>
+                    </div>
+                </div>
+
+                <div class="category-card" onclick="selectCategory('education')">
+                    <div class="icon">📚</div>
+                    <div class="card-info">
+                        <div class="card-title">教育系</div>
+                        <div class="card-sub">教員志望 / 幼児教育 / 保育・教育課題 など (400問)</div>
+                    </div>
+                </div>
+
+                <div class="category-card" onclick="selectCategory('science')">
+                    <div class="icon">🔬</div>
+                    <div class="card-info">
+                        <div class="card-title">理工系</div>
+                        <div class="card-sub">情報・AI / 工学 / 理学 / 農学 など (400問)</div>
+                    </div>
+                </div>
+
+                <div class="category-card" onclick="selectCategory('global')">
+                    <div class="icon">🌐</div>
+                    <div class="card-info">
+                        <div class="card-title">国際系</div>
+                        <div class="card-sub">外国語 / 国際関係 / 多様性・SDGs など (400問)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 面接＆計測画面 -->
+        <div id="quiz-screen" style="display: none;">
+            <div style="color: white; margin-bottom: 12px; font-weight: bold; font-size: 1.1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5);" id="current-category-label"></div>
+            
+            <div class="question-container">
+                <div class="question-text" id="quiz-text">「スタート」を押すと面接官から質問されます</div>
+            </div>
+
+            <div class="timer-box" id="timer-text"></div>
+
+            <div class="btn-group">
+                <button class="btn" id="start-btn" onclick="startQuiz()">スタート</button>
+                <button class="btn" id="stop-btn" onclick="stopQuiz()" disabled>回答終了（ストップ）</button>
+            </div>
+
+            <!-- 4択自己評価パネル（回答終了後に表示） -->
+            <div id="eval-container">
+                <h3>今回の自己評価を選んでください</h3>
+                <div class="eval-grid">
+                    <button class="eval-btn" onclick="saveEvaluation('🌟 北辰レベル')">🌟 北辰レベル</button>
+                    <button class="eval-btn" onclick="saveEvaluation('👍 まあまあかな')">👍 まあまあ話せた</button>
+                    <button class="eval-btn" onclick="saveEvaluation('⚠️ まだ不安')">⚠️ まだ不安</button>
+                    <button class="eval-btn" onclick="saveEvaluation('💦 チアアップ')">💦 チアアップ</button>
+                </div>
+            </div>
+
+            <button class="back-link" onclick="goBackToSelect()">← 志望系統の選択に戻る</button>
+        </div>
+
+        <!-- 3. 記録一覧画面 -->
+        <div id="history-screen">
+            <h2>📊 これまでの練習記録</h2>
+            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px;">保存件数: <span id="history-count">0</span> 件</div>
+            
+            <div class="history-list" id="history-list-container">
+                <!-- JavaScriptでここに過去の履歴がカード形式で差し込まれます -->
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="reset-btn" onclick="resetHistory()">記録をすべてリセット</button>
+            </div>
+
+            <button class="back-link" onclick="closeHistoryScreen()" style="background:#334155; margin-top: 15px;">← トップ画面に戻る</button>
+        </div>
+
+    </div>
+
+    <script>
+        // =========================================================
+        // 【担当者設定】背景画像のURLを変更する場合はここに記載してください
+        // 例: const CUSTOM_BACKGROUND_URL = "https://i.ibb.co/21ztyBRF/7-BB70059-B598-48-C2-9-C5-F-C889743-E857-D.png";
+        // =========================================================
+        const CUSTOM_BACKGROUND_URL = "https://i.ibb.co/21ztyBRF/7-BB70059-B598-48-C2-9-C5-F-C889743-E857-D.png"; 
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const bgContainer = document.getElementById("bg-container");
+            if (CUSTOM_BACKGROUND_URL && CUSTOM_BACKGROUND_URL.trim() !== "") {
+                bgContainer.style.backgroundImage = `url('${CUSTOM_BACKGROUND_URL.trim()}')`;
+                bgContainer.classList.add("custom-bg-active");
+            }
+        });
+
+        // 問題バンク（全1,900問）
+        const questionBanks = {
+            common: [
+                "簡単に自己紹介してください。", "ご自身の長所は何ですか。", "ご自身の短所は何ですか。", "あなたを一言で表すとどんな人ですか。", "友人からどのような人だと言われますか。", "家族からどのように見られていますか。", "最近、うれしかった出来事は何ですか。", "最近、つらかった出来事は何ですか。", "あなたのモットーは何ですか。", "あなたの座右の銘は何ですか。",
+                "なぜこの大学を志望したのですか。", "この学部・学科を選んだ理由を教えてください。", "他の大学ではなく本学を選んだ決め手は何ですか。", "オープンキャンパスで印象に残ったことはありますか。", "大学の理念や方針について知っていますか。", "入学後に取り組みたい学びは何ですか。", "大学で学んだことを将来どのように活かしたいですか。", "この大学でなければならない理由は何ですか。", "志望校の教授や研究分野について調べていますか。", "第二志望の大学はありますか。",
+                "高校生活で一番力を入れたことは何ですか。", "高校生活で一番成長できた経験は何ですか。", "高校で好きだった科目は何ですか。", "高校で苦手だった科目は何ですか。", "苦手科目をどのように克服しましたか。", "高校の授業で印象に残った内容は何ですか。", "定期テストの勉強方法を教えてください。", "成績が伸びたきっかけはありますか。", "授業以外で取り組んだ自主学習はありますか。", "あなたの学習習慣を教えてください。",
+                "所属していた部活動について教えてください。", "部活動での役割は何でしたか。", "部活動で大変だったことは何ですか。", "部活動を通じて得たことは何ですか。", "部活動での成功体験は何ですか。", "部活動での失敗体験は何ですか。", "委員会活動で印象に残ったことはありますか。", "部活動と勉強をどのように両立しましたか。", "部活動を辞めたいと思ったことはありますか。", "部活動を通じて学んだリーダーシップはありますか。",
+                "体育祭での思い出を教えてください。", "文化祭での役割は何でしたか。", "修学旅行で印象に残ったことはありますか。", "学校行事で大変だったことはありますか。", "ボランティア活動の経験はありますか。", "生徒会活動に参加しましたか。", "高校生活の中で一番思い出に残っている行事は何ですか。", "課外活動に積極的に参加しましたか。", "クラスで果たした役割は何ですか。", "学校生活で心に残っているエピソードを教えてください。",
+                "周囲からどのような人間だと思われたいですか。", "今までで一番努力したことは何ですか。", "あなたの強みは何ですか。", "あなたの弱みは何ですか。", "短所を改善するためにどのように取り組んでいますか。", "他人と協力して物事に取り組んだ経験を教えてください。", "自分を変えたいと思ったことはありますか。", "最近挑戦したことはありますか。", "今までで一番悔しかった経験は何ですか。", "自分の性格を3つの言葉で表すと？",
+                "将来の夢は何ですか。", "その夢を持つようになったきっかけは何ですか。", "大学卒業後はどのような進路を考えていますか。", "就職したい業界はありますか。", "大学院進学を考えていますか。", "10年後はどのような自分になっていたいですか。", "将来の夢が変わったことはありますか。", "将来の夢の実現に必要なことは何だと思いますか。", "最近気になったニュースを教えてください。そのニュースについてどう考えますか。", "今の日本社会で一番大きな課題は何だと思いますか。",
+                "最近読んだ本について教えてください。", "その本から学んだことは何ですか。", "好きな作家や本はありますか。", "読書の習慣はありますか。", "趣味は何ですか。", "休日はどのように過ごしていますか。", "打ち込んでいることはありますか。", "尊敬する人物は誰ですか。その人物を尊敬する理由は何ですか。", "これまでの失敗から学んだことは何ですか。", "難しい課題に直面したとき、どう解決しましたか。",
+                "問題解決のために工夫したことはありますか。", "集団で課題に取り組んだ経験を教えてください。", "効率的な勉強法を見つけたことはありますか。", "成績が落ちたとき、どう立て直しましたか。", "逆境に立たされた経験はありますか。", "新しいことを学ぶときに意識していることは？", "自分の弱点を克服した体験は？", "努力して結果が出なかった経験は？", "クラスでリーダーを務めたことはありますか。", "グループで意見が対立したとき、どうしましたか。",
+                "あなたがリーダーとして工夫したことはありますか。", "協力して成功した経験を教えてください。", "周囲をまとめるときに心がけていることは何ですか。", "あなたがサポート役に回った経験はありますか。", "自分の意見が受け入れられなかったとき、どうしましたか。", "他人と協力する際に大切にしていることは何ですか。", "友人関係で大切にしていることは何ですか。", "チームで達成感を感じた瞬間はありますか。", "高校生活で最も成長した点はどこですか。", "高校生活で後悔していることはありますか。",
+                "挫折から立ち直った経験はありますか。", "失敗から学んだことは何ですか。", "成功体験から学んだことは何ですか。", "今後改善したい性格はありますか。", "高校生活で変化した自分の考え方はありますか。", "自分を一番成長させた出来事は何ですか。", "あなたが乗り越えた壁は何ですか。", "今後克服したい課題は何ですか。", "友情とは何だと思いますか。", "尊敬できる人の条件は何ですか。",
+                "信頼されるために必要なことは何ですか。", "リーダーに必要な資質は何だと思いますか。", "あなたにとって大切な価値観は何ですか。", "研究してみたいテーマはありますか。", "好きな分野をどのように深めていますか。", "興味のある学問を将来どう活かしたいですか。", "高校の勉強と大学の勉強の違いは何だと思いますか。", "大学で学ぶことを社会にどう還元したいですか。", "課題研究の経験はありますか。", "興味を持ったきっかけは何ですか。",
+                "大学で取り組みたい研究室はありますか。", "自主的に学んだことはありますか。", "学ぶことの意義は何だと思いますか。", "クラスメイトとの関係で大切にしていたことは？", "先生との関わりで印象に残っていることは？", "学校での人間関係で苦労したことは？", "友人と意見が食い違ったときどうしましたか？", "一番仲の良い友人はどんな人ですか？", "その友人から学んだことはありますか？", "人間関係で成長できた経験は？",
+                "周囲と良好な関係を築く秘訣は？", "後輩に伝えたいことはありますか？", "先輩から学んだことはありますか？", "親に頼らずに頑張ったことはありますか。", "一人暮らしに挑戦したいですか。", "自分で計画を立てて行動した経験は？", "時間管理で意識していることは？", "健康のために心がけていることは？", "ストレス解消方法は何ですか？", "初対面の人と話すとき心がけていることは？",
+                "人にわかりやすく説明する工夫は？", "苦手な人との付き合い方は？", "話し合いで意見が対立したらどうしますか？", "人に指摘されたときどう受け止めますか？", "あなたの話し方の特徴は？", "聞き手に回った経験は？", "相手の意見を尊重するために意識していることは？", "自分の考えを論理的に伝えた経験は？", "話すことと聞くこと、どちらが得意ですか？", "研究者に必要な資質は？",
+                "将来研究したいテーマは？", "好きな科学者は誰ですか？", "研究に必要な姿勢は？", "表彰された経験はありますか？", "コンクールに参加しましたか？", "リーダーシップを発揮した経験は？", "学力以外で誇れることは？", "人に感謝された経験は？", "忍耐力を発揮した経験は？", "誰かを支えた経験は？",
+                "どんな社会人になりたいですか？", "あなたの人生で最も大切な出来事は？", "あなたに最も影響を与えた人は？", "小さい頃の夢は？", "今までで一番幸せだった瞬間は？", "失敗をどう乗り越えてきましたか？", "あなたの人生観を一言で表すと？", "影響を受けた本や言葉は？", "人生で挑戦したいことは？", "自分の存在意義は何だと思いますか。",
+                "理想の人生像は？", "ボランティア活動から学んだことは？", "高校と大学の勉強の違いは？", "大学で一番不安なことは？", "大学生活で楽しみにしていることは？", "サークルに入りたいですか？", "アルバイトはしたいですか？", "自主性をどう発揮したいですか？", "大学生活で挑戦したいことは？", "高校までと大学で意識を変えたいことは？",
+                "大学生活をどう過ごしたいですか？", "大学で身につけたい力は？", "入学後の目標（抱負）を教えてください", "大学で挑戦したいことはありますか？", "大学生活に期待していることは？", "本学部を志望した理由は？", "あなたの学びたいことは本学部以外でも実現できるのでは？", "〇〇先生のもとで学びたいと書いてありますが、その先生が次年度本学で教鞭をとらなかったらどうしますか？", "高校生活で頑張ったことを教えてください", "高校生活のいい思い出と悪い思い出について教えてください",
+                "高校生活で感じたあなたの課題は？", "自己紹介をしてください", "長所はなんですか？ 短所はなんですか？", "あなたが大切していることは何ですか？", "本学のアドミッションポリシーについてどう思いますか？", "本学のオープンキャンパスや公開講座には参加しましたか？", "本学についてどのようなイメージをもっていますか？", "最近気になるニュースは何ですか？", "あなたが最近読んで、最も印象に残っている本は何ですか？", "あなたが尊敬する人物は？",
+                "あなたが最も影響を受けた人物は？", "志望動機を教えてください", "それはどういうきっかけですか？", "なぜその夢（目標）を実現したいのですか？", "どのように夢（目標）を達成しますか？", "いつまでに夢（目標）を達成しますか？", "本学以外にも同じことを学べる大学がある中で、なぜ本学を選びましたか？", "本学のどんな授業を期待していますか？", "授業以外にどんなことに期待していますか？", "本学での学習計画を教えてください",
+                "どんな大学生を目指していますか？", "本学のアドミッションポリシーを理解していますか？", "本学のカリキュラムポリシーを理解していますか？", "本学のディプロマポリシーを理解していますか？", "本学の建学の精神を理解していますか？", "高校時代に頑張ったことは？", "そこで培ったことは？", "本学でどのように活かしていきたいですか？", "部活動（クラス）でどんな役割を担うことが多かったですか？", "自己PRをしてください",
+                "あなたの長所と短所を教えてください", "短所はどのように改善する予定ですか？", "長所を本学でどのように活かしていきたいですか？", "長所と短所の理由も教えてください", "友人からどんな人間だと言われることが多いですか？", "本学に好きな教授はいますか？", "僕の本は読んだ？（教授から）", "本の感想", "最近、関心のあるニュースは？", "最近、読んだ本は？",
+                "日本をより良くするためには何が必要だと考えますか？", "あなたの座右の銘は？", "あなたを漢字一文字で表すとすれば、どういう漢字でしょうか？", "あなたの人生を一つの本にするならば、どんなタイトルをつけますか？", "あなたの高校はどんな高校ですか？", "またなぜその高校を選びましたか？", "どうして入試（推薦）を受けていますか？", "もし落ちたらどうしますか？", "面接練習はしましたか？", "あなたの趣味はなんですか？",
+                "本学に足りないところはなんですか？", "どんな大人になりたいですか？", "あなたが他の受験者より優秀だといえる理由を教えてください", "あなたを入学させる本学のメリットを教えてください", "最後になにか言い残したことはありませんか？", "逆に、聞きたいことはありませんか？", "本学で学びたいことを教えてください", "入学後の目標（抱負）を教えてください", "大学で挑戦したいことはありますか？", "大学生活に期待していることは？",
+                "1分で自己紹介をしてください", "長所はなんですか？ 短所はなんですか？", "高校生活で頑張ったことを教えてください", "高校時代の思い出について教えてください", "オープンキャンパスに参加したときの印象を教えてください。（参加しなかった場合 → なぜ参加しなかったのですか？）", "本学についてどのようなイメージをもっていますか", "併願はされていますか？", "本学は第一志望ですか？", "卒業後にやりたいことはなんですか？", "あなたの夢はなんですか？",
+                "最近のニュースで関心があるものは？", "尊敬する人物は？", "入試区分（総合型選抜、学校推薦型選抜）を選んだ理由は？", "本校の学びの特色はどのようなものだと思いますか？", "心に残った本は何ですか。タイトルと著者、その理由を述べてください。", "部活動以外で取り組んだことを教えてください。", "あなたが思う本校の1番の魅力は何ですか？", "本校と他校との違いは何だと思います？", "本校の建学の精神やアドミッション・ポリシーについて、あなたはどう思いますか？", "あなたの将来設計を教えて下さい。",
+                "卒業後はどのような仕事に就きたいと考えていますか？", "あなたは自分がどのような仕事に向いていると思いますか？", "将来はどのような大人になりたいですか？", "将来はどのように社会に貢献していきたいですか？", "入学後に学びたいことを教えて下さい。", "入学後はどのような研究をしたいですか。", "入学後の1年次から4年次までの学習計画を教えて下さい。", "あなたの入学後の学習計画と卒業後の将来設計との結び付きを説明して下さい。", "高校の学びと大学の学びとは何が違うと思いますか？", "学習や研究以外で入学後にやってみたいことやチャレンジしたいことはありますか？",
+                "高校生活で1番うれしかったことは何ですか？", "高校生活で1番苦労したことは何ですか？", "高校の特長や校風を教えて下さい。", "あなたにとって印象に残っている先生について教えて下さい。",
+                "この試験に合格したら、高校卒業までどのように過ごす予定ですか？", "あなたの性格や特徴を簡単に教えて下さい。", "あなたにとって大人とはどのような存在ですか？",
+                "最近気になっているニュースや社会問題を教えて下さい。", "ＡＩが人間の仕事を奪うとされていますが、それについてあなたはどう思いますか？",
+                "グローバル化していく社会の中で、あなたはこれからどのように活躍していきたいですか？", "高校生活を通して１番成長したと感じることは何ですか？",
+                "現在の日本社会についてどう思いますか？ どのような社会だと思いますか？", "オープンキャンパスの模擬授業や大学・学部・学科説明で興味をもったこと",
+                "あなたにとって、本当の成長とは何だと思いますか？", "もしこの試験が不合格だった場合は、どうしますか？", "〇〇学部になぜ入りたいのですか？", "研究内容に対する現時点での努力は？",
+                "自分が力を入れた経験とそのことへの取り組み方を教えてください", "満足度や達成感を感じた経験はどのようなことですか？", "他者からほめられたことはありますか？それはどのようなことですか？"
+            ],
+            medical: [
+                "簡単に自己紹介してください。", "ご自身の長所は何ですか。", "ご自身の短所は何ですか。", "なぜ医療系の学部を志望しましたか。", "その学部で学びたいことは何ですか。",
+                "医療職を目指すきっかけは何ですか。", "将来どんな医療従事者になりたいですか。", "この大学を選んだ理由は？", "チーム医療の重要性を説明してください。", "患者との信頼関係をどう築きますか。"
+            ],
+            education: [
+                "簡単に自己紹介してください。", "ご自身の長所は何ですか。", "教育系の学部を目指した理由は何ですか", "どんな先生になりたいですか", "この大学を選んだ理由は何ですか",
+                "大学で学んだことを将来どう活かしたいですか", "学校の先生になるためにどんな準備をしていますか", "いじめやトラブルがあったらどう対応しますか", "全ての子どもが公平に学べる環境にするにはどうしますか", "不登校やいじめについてどう考えますか"
+            ],
+            science: [
+                "簡単に自己紹介してください。", "ご自身の長所は何ですか。", "理工学部を目指した理由は何ですか", "将来どんな仕事をしたいですか", "この大学を選んだ理由は何ですか",
+                "大学で学んだことを将来どう活かしたいですか", "理工学部で楽しみにしている授業や実習は何ですか", "科学や技術で世の中をどう良くしたいですか", "ロボットやAIをどのように活かしたいですか", "チームで実験をするときどう工夫しますか"
+            ],
+            global: [
+                "簡単に自己紹介してください。", "ご自身の長所は何ですか。", "異文化理解において最も重要だと思うことは何ですか？", "世界で起きている問題の中で、現在最も関心があるものは何ですか？",
+                "海外で働いてみたいと思いますか。", "大学卒業後はどのような進路を考えていますか。", "グローバル社会で活躍するために必要な力は何ですか。", "持続可能な開発目標（SDGs）で一番関心がある目標は？"
+            ]
+        };
+
+        const categoryNames = {
+            common: "【選択中：全学部・共通質問】",
+            medical: "【選択中：医療系】",
+            education: "【選択中：教育系】",
+            science: "【選択中：理工系】",
+            global: "【選択中：国際系】"
+        };
+
+        let currentCategory = 'common';
+        let startTime = null;
+        let isRunning = false;
+        let lastQuestionIndex = -1;
+        let currentElapsedSeconds = 0;
+        let currentQuestionText = "";
+
+        const welcomeMessage = document.getElementById("welcome-message");
+        const historyBtnBox = document.getElementById("history-btn-box");
+        const selectScreen = document.getElementById("select-screen");
+        const quizScreen = document.getElementById("quiz-screen");
+        const historyScreen = document.getElementById("history-screen");
+        const quizText = document.getElementById("quiz-text");
+        const timerText = document.getElementById("timer-text");
+        const startBtn = document.getElementById("start-btn");
+        const stopBtn = document.getElementById("stop-btn");
+        const evalContainer = document.getElementById("eval-container");
+        const categoryLabel = document.getElementById("current-category-label");
+        const historyListContainer = document.getElementById("history-list-container");
+        const historyCount = document.getElementById("history-count");
+
+        function selectCategory(categoryKey) {
+            currentCategory = categoryKey;
+            welcomeMessage.style.display = "none";
+            historyBtnBox.style.display = "none";
+            selectScreen.style.display = "none";
+            quizScreen.style.display = "flex";
+            categoryLabel.innerText = categoryNames[categoryKey];
+            quizText.innerText = "「スタート」を押すと面接官から質問されます";
+            timerText.innerText = "";
+            evalContainer.style.display = "none";
+            lastQuestionIndex = -1;
+        }
+
+        function goBackToSelect() {
+            if (isRunning) {
+                if (!confirm("計測中です。系統選択に戻りますか？")) return;
+                isRunning = false;
+            }
+            quizScreen.style.display = "none";
+            evalContainer.style.display = "none";
+            welcomeMessage.style.display = "block";
+            historyBtnBox.style.display = "block";
+            selectScreen.style.display = "block";
+            startBtn.style.opacity = "1";
+            startBtn.style.cursor = "pointer";
+            stopBtn.classList.remove("active");
+            stopBtn.disabled = true;
+        }
+
+        function openHistoryScreen() {
+            welcomeMessage.style.display = "none";
+            historyBtnBox.style.display = "none";
+            selectScreen.style.display = "none";
+            historyScreen.style.display = "block";
+            renderHistory();
+        }
+
+        function closeHistoryScreen() {
+            historyScreen.style.display = "none";
+            welcomeMessage.style.display = "block";
+            historyBtnBox.style.display = "block";
+            selectScreen.style.display = "block";
+        }
+
+        function startQuiz() {
+            const list = questionBanks[currentCategory];
+            if (!list || list.length === 0) {
+                alert("この系統にはまだ質問が登録されていません。");
+                return;
+            }
+
+            let randomIndex;
+            if (list.length > 1) {
+                do {
+                    randomIndex = Math.floor(Math.random() * list.length);
+                } while (randomIndex === lastQuestionIndex);
+            } else {
+                randomIndex = 0;
+            }
+            lastQuestionIndex = randomIndex;
+
+            currentQuestionText = list[randomIndex];
+            quizText.innerText = currentQuestionText;
+
+            evalContainer.style.display = "none";
+            isRunning = true;
+            startTime = performance.now();
+            timerText.innerText = "🎤 回答中...";
+
+            startBtn.style.opacity = "0.9";
+            stopBtn.classList.add("active");
+            stopBtn.disabled = false;
+        }
+
+        function stopQuiz() {
+            if (!isRunning) return;
+            isRunning = false;
+
+            const endTime = performance.now();
+            currentElapsedSeconds = Math.floor((endTime - startTime) / 1000);
+
+            timerText.innerText = `⏱️ 回答時間: ${currentElapsedSeconds} 秒`;
+
+            startBtn.style.opacity = "1";
+            startBtn.style.cursor = "pointer";
+            stopBtn.classList.remove("active");
+            stopBtn.disabled = true;
+
+            // 回答終了したら4択自己評価パネルを表示
+            evalContainer.style.display = "block";
+        }
+
+        // 4択自己評価を選んだときの処理（即座に保存して次へスムーズに移行）
+        function saveEvaluation(evalText) {
+            const now = new Date();
+            const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const record = {
+                date: dateStr,
+                category: categoryNames[currentCategory].replace("【選択中：", "").replace("】", ""),
+                question: currentQuestionText,
+                time: currentElapsedSeconds,
+                evaluation: evalText
+            };
+
+            // 既存の記録を取得して新しい記録を追加
+            let history = JSON.parse(localStorage.getItem("kaitoo_interview_history")) || [];
+            history.unshift(record); // 新しいものを先頭に
+            localStorage.setItem("kaitoo_interview_history", JSON.stringify(history));
+
+            // ポップアップを出さず、評価パネルを消して次のスタートがすぐ押せる状態にする
+            evalContainer.style.display = "none";
+            quizText.innerText = "「スタート」を押すと次の質問が始まります";
+            timerText.innerText = "";
+        }
+
+        // 記録一覧を描画する関数
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem("kaitoo_interview_history")) || [];
+            historyCount.innerText = history.length;
+            historyListContainer.innerHTML = "";
+
+            if (history.length === 0) {
+                historyListContainer.innerHTML = `<div style="text-align: center; color: #64748b; padding: 20px;">まだ練習記録がありません。<br>面接練習を行って自己評価を保存してみましょう！</div>`;
+                return;
+            }
+
+            history.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "history-card";
+                card.innerHTML = `
+                    <div class="history-card-header">
+                        <span>📁 ${item.category} / ${item.date}</span>
+                    </div>
+                    <div class="history-card-question">Q. ${item.question}</div>
+                    <div class="history-card-footer">
+                        <span style="color: #2563eb;">⏱️ ${item.time} 秒</span>
+                        <span style="color: #059669;">${item.evaluation}</span>
+                    </div>
+                `;
+                historyListContainer.appendChild(card);
+            });
+        }
+
+        // 記録をすべてリセットする関数
+        function resetHistory() {
+            if (confirm("これまでの練習記録をすべて削除しますか？ この操作は元に戻せません。")) {
+                localStorage.removeItem("kaitoo_interview_history");
+                renderHistory();
+            }
+        }
+    </script>
+
+</body>
+</html>
